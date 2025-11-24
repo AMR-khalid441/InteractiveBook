@@ -1,0 +1,11 @@
+fastapi==0.121.0
+uvicorn[standard]==0.38.0
+pydantic==2.12.4
+python-multipart==0.0.20
+sqlalchemy==2.0.20
+pydantic-settings==2.2.1
+aiofiles==23.2.1
+langchain
+PyMuPDF
+langchain-community
+motor
