@@ -65,6 +65,11 @@ INFO: Loader created: PyMuPDFLoader
 INFO: File loaded successfully: 10 documents/pages extracted
 ```
 
+## Step 6: Confirm Vector Storage
+
+- Check logs for `Generated X embeddings` and `Stored X chunks in ChromaDB`
+- If embeddings fail, chunks are still saved to MongoDB but search/chat relevance will suffer
+
 ## Common Issues
 
 ### Issue 1: File Not Found
@@ -111,6 +116,10 @@ INFO: File loaded successfully: 10 documents/pages extracted
 - Try opening PDF in a PDF viewer
 - Try a different PDF file
 - Check if PDF has extractable text
+
+### Issue 4: Chat returns only search results
+- **Cause:** `OPENAI_API_KEY` missing/invalid or OpenAI call failed
+- **Solution:** Add a valid API key to `src/assets/.env`, restart the server, and retry
 
 ## What to Share
 

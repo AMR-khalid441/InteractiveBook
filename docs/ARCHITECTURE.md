@@ -67,19 +67,19 @@ InteractiveBook is built using a modern microservices-inspired architecture with
 - Data validation
 - Schema definitions
 
-### 5. Service Layer (Planned)
-- **Location**: `src/services/` (planned)
+### 5. Service Layer
+- **Location**: `src/services/`
 
-**Services (Planned):**
-- `OCRService`: Image-to-text extraction
-- `PDFGeneratorService`: PDF creation from OCR text
-- `EmbeddingService`: Vector embedding generation
-- `LLMService`: LLM integration (OpenAI)
-- `RAGService`: RAG pipeline orchestration
+**Services (Current):**
+- `EmbeddingService`: Local SentenceTransformers embeddings (`all-MiniLM-L6-v2` by default)
+- `VectorDBService`: ChromaDB persistence and similarity search
+- `LLMService`: OpenAI chat completions (optional; disabled if API key missing)
+- `RAGService`: Orchestrates retrieval + LLM generation with graceful fallback to search results
+- `OCRService` / `PDFGeneratorService`: Planned
 
 ### 6. Data Storage Layer
-- **MongoDB**: Metadata and document information
-- **ChromaDB**: Vector embeddings storage (planned)
+- **MongoDB**: Metadata, chunks (including embeddings)
+- **ChromaDB**: Vector embeddings storage (persistent client per project collection)
 - **File System**: Document storage
 
 ---
@@ -116,10 +116,13 @@ Process Request
 POST /api/v1/data/process/{project_id}
     ↓
 ProcessController.get_file_content()
-    ├─ Determine file type (.pdf or .txt)
+    ├─ Determine file type (.pdf, .txt, .docx, .md, .csv, .rtf)
     ├─ Load file using LangChain loader
     │   ├─ PyMuPDFLoader (for PDF)
-    │   └─ TextLoader (for TXT)
+    │   ├─ TextLoader (for TXT/RTF)
+    │   ├─ UnstructuredWordDocumentLoader (DOCX)
+    │   ├─ UnstructuredMarkdownLoader (MD)
+    │   └─ CSVLoader (CSV)
     └─ Return document content
     ↓
 ProcessController.process_file_content()
@@ -127,7 +130,13 @@ ProcessController.process_file_content()
     ├─ Split into chunks
     └─ Add metadata
     ↓
-Return chunks (ready for embedding - future)
+EmbeddingService.generate_embeddings_batch()
+    └─ Local SentenceTransformers embeddings
+    ↓
+VectorDBService.add_chunks() → ChromaDB
+ChunkModel.save_chunks()     → MongoDB
+    ↓
+Return counts + storage stats
 ```
 
 ### Future: Image OCR Flow
@@ -149,28 +158,21 @@ PDFGeneratorService.image_to_pdf()
 [Continue with Document Processing Flow]
 ```
 
-### Future: RAG Query Flow
+### RAG Query Flow
 
 ```
 User Query
     ↓
 POST /api/v1/chat/{project_id}
     ↓
-ChatController.process_user_query()
+RAGService.generate_answer()
+    ├─ EmbeddingService.generate_embedding(query)
+    ├─ VectorDBService.search_similar() in ChromaDB
+    ├─ Build prompt with retrieved chunks
+    ├─ LLMService.generate_response() (if API key configured)
+    └─ Graceful fallback: return search results if LLM unavailable
     ↓
-EmbeddingService.generate_embedding(query)
-    └─ OpenAI text-embedding-3-large
-    ↓
-RAGService.retrieve_context()
-    ├─ Vector search in ChromaDB
-    └─ Get Top-K Relevant Chunks
-    ↓
-LLMService.generate_response(query, context)
-    ├─ Build prompt with context
-    ├─ Call OpenAI GPT-4
-    └─ Generate answer
-    ↓
-Return Answer + Sources
+Return Answer + Sources (or search results only)
 ```
 
 ---
@@ -195,14 +197,16 @@ Return Answer + Sources
 - `get_project_or_create_one()`: Get or create project
 - `get_all_projects()`: List all projects with pagination
 
-#### chunks (Planned)
+#### chunks
 ```json
 {
   "_id": ObjectId("507f1f77bcf86cd799439012"),
   "chunk_text": "Document text content...",
   "chunk_order": 1,
   "chunk_project_id": ObjectId("507f1f77bcf86cd799439011"),
-  "vector_id": "chunk_abc123_1"
+  "file_id": "abc123_document.pdf",
+  "metadata": {},
+  "embedding": [0.123, -0.456, ...]
 }
 ```
 
@@ -231,16 +235,15 @@ Return Answer + Sources
 }
 ```
 
-### ChromaDB Structure (Planned)
+### ChromaDB Structure
 
 - **Collection per Project**: `project_{project_id}`
 - **Document Format**:
   ```python
   {
     "id": "chunk_{book_id}_{chunk_order}",
-    "embedding": [0.123, -0.456, ...],  # 1536-dim vector
+    "embedding": [0.123, -0.456, ...],  # 384-dim vector by default
     "metadata": {
-      "chunk_text": "string",
       "chunk_order": 1,
       "book_id": "string",
       "project_id": "string"
@@ -291,13 +294,17 @@ src/assets/
 - **Why**: Fast PDF processing, text extraction
 - **Benefits**: Better than pdfminer for performance
 
-### ChromaDB (Planned)
+### ChromaDB
 - **Why**: Lightweight, embeddable, easy to use
-- **Benefits**: No separate server needed, Python-native
+- **Benefits**: No separate server needed, Python-native persistent client
 
-### OpenAI API (Planned)
-- **Why**: High-quality embeddings and LLM
-- **Benefits**: Production-ready, reliable, good performance
+### SentenceTransformers
+- **Why**: Local, free embeddings (`all-MiniLM-L6-v2`)
+- **Benefits**: Fast, CPU-friendly by default, no external API required
+
+### OpenAI API
+- **Why**: High-quality LLM responses for chat
+- **Benefits**: Production-ready, reliable; optional so search still works without a key
 
 ---
 
@@ -330,7 +337,7 @@ src/assets/
 ### Backend
 - ✅ Async/await for I/O operations
 - ✅ Connection pooling (MongoDB Motor)
-- ⏳ Batch embedding generation (planned)
+- ✅ Batch embedding generation for chunk sets
 - ⏳ Caching (Redis - planned)
 - ⏳ Background job processing (Celery - planned)
 

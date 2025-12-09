@@ -131,12 +131,32 @@ You should see packages like `fastapi`, `uvicorn`, `motor`, `pydantic`, etc.
    ```env
    APPLICATION_NAME=InteractiveBook
    APP_VERSION=1.0.0
+
+   # Optional: needed for chat answers; search works without it
    OPENAI_API_KEY=your_openai_api_key_here
-   FILE_ALLOWED_EXTENSIONS=["application/pdf","text/plain"]
+
+   FILE_ALLOWED_EXTENSIONS=["application/pdf","text/plain","application/vnd.openxmlformats-officedocument.wordprocessingml.document","text/markdown","text/csv","application/rtf"]
    FILE_MAX_SIZE=10485760
    FILE_CHUNK_SIZE=512000
+
    MONGODB_URl=mongodb://localhost:27017
    MONGODB_DB_NAME=interactivebook
+
+   EMBEDDING_MODEL=all-MiniLM-L6-v2
+   EMBEDDING_DIMENSION=384
+   EMBEDDING_BATCH_SIZE=32
+   EMBEDDING_DEVICE=cpu
+
+   CHROMADB_PATH=src/assets/chromadb
+   CHROMADB_COLLECTION_PREFIX=project_
+   VECTOR_SEARCH_TOP_K=5
+
+   LLM_MODEL=gpt-3.5-turbo
+   LLM_TEMPERATURE=0.7
+   LLM_MAX_TOKENS=500
+
+   RAG_CONTEXT_CHUNKS=5
+   RAG_SIMILARITY_THRESHOLD=0.0
    ```
 
 4. **Replace `your_openai_api_key_here` with your actual OpenAI API key**
@@ -303,12 +323,24 @@ uvicorn main:app --reload --host 0.0.0.0 --port 5000
 |----------|-------------|---------|----------|
 | `APPLICATION_NAME` | Application name | `InteractiveBook` | No |
 | `APP_VERSION` | Application version | `1.0.0` | No |
-| `OPENAI_API_KEY` | OpenAI API key | - | Yes |
-| `FILE_ALLOWED_EXTENSIONS` | Allowed file types | `["application/pdf","text/plain"]` | No |
+| `OPENAI_API_KEY` | OpenAI API key for chat (optional) | `""` | No |
+| `FILE_ALLOWED_EXTENSIONS` | Allowed file MIME types | `["application/pdf","text/plain","application/vnd.openxmlformats-officedocument.wordprocessingml.document","text/markdown","text/csv","application/rtf"]` | No |
 | `FILE_MAX_SIZE` | Max file size in bytes | `10485760` (10 MB) | No |
 | `FILE_CHUNK_SIZE` | File upload chunk size | `512000` (500 KB) | No |
 | `MONGODB_URl` | MongoDB connection string | `mongodb://localhost:27017` | Yes |
 | `MONGODB_DB_NAME` | MongoDB database name | `interactivebook` | No |
+| `EMBEDDING_MODEL` | SentenceTransformers model | `all-MiniLM-L6-v2` | No |
+| `EMBEDDING_DIMENSION` | Embedding vector size | `384` | No |
+| `EMBEDDING_BATCH_SIZE` | Batch size for embedding generation | `32` | No |
+| `EMBEDDING_DEVICE` | Embedding device (`cpu`/`cuda`) | `cpu` | No |
+| `CHROMADB_PATH` | Path for ChromaDB persistence | `src/assets/chromadb` | No |
+| `CHROMADB_COLLECTION_PREFIX` | Prefix for per-project collections | `project_` | No |
+| `VECTOR_SEARCH_TOP_K` | Default top-k for search | `5` | No |
+| `LLM_MODEL` | OpenAI chat model | `gpt-3.5-turbo` | No |
+| `LLM_TEMPERATURE` | OpenAI temperature | `0.7` | No |
+| `LLM_MAX_TOKENS` | Max tokens per response | `500` | No |
+| `RAG_CONTEXT_CHUNKS` | Default chunks to retrieve for chat | `5` | No |
+| `RAG_SIMILARITY_THRESHOLD` | Minimum similarity (0 disables filter) | `0.0` | No |
 
 ### MongoDB Connection String
 

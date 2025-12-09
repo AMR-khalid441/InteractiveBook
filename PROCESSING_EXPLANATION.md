@@ -28,6 +28,7 @@ You send a POST request to `/api/v1/data/process/{project_id}` with:
 - Each Document has:
   - `page_content`: The extracted text
   - `metadata`: Page number, source file, etc.
+- Supported extensions: `.pdf`, `.txt`, `.docx`, `.md`, `.csv`, `.rtf`
 
 #### 3.2 Text Chunking
 - **Uses RecursiveCharacterTextSplitter** (LangChain)
@@ -41,7 +42,7 @@ You send a POST request to `/api/v1/data/process/{project_id}` with:
 - Each embedding is a 384-dimensional vector representing the semantic meaning
 - Embeddings are stored with each chunk
 
-#### 3.4 Database Storage
+#### 3.4 Database Storage (MongoDB)
 - Saves chunks to MongoDB collection: `chunks`
 - Each chunk document contains:
   - `chunk_text`: The actual text content
@@ -49,6 +50,14 @@ You send a POST request to `/api/v1/data/process/{project_id}` with:
   - `file_id`: Reference to the source file
   - `embedding`: The vector embedding (384 floats)
   - `metadata`: Additional information (page number, etc.)
+
+#### 3.5 Vector DB Storage (ChromaDB)
+- Stores embeddings + metadata in a per-project ChromaDB collection (`project_{project_id}`)
+- Enables fast vector similarity search for the `search` and `chat` endpoints
+
+### Step 5: Search & Chat
+- `/api/v1/data/search/{project_id}` performs semantic search over stored embeddings
+- `/api/v1/data/chat/{project_id}` retrieves context and (if `OPENAI_API_KEY` is set) generates an LLM answer; otherwise returns ranked search results
 
 ### Step 4: Response
 Returns:

@@ -317,6 +317,16 @@ Invalid file path
 3. Check data types match schema
 4. Review API documentation: [API.md](API.md)
 
+### Chat returns only search results
+
+**Symptom:**
+- Chat endpoint responds with `answer: null` and returns `search_results` + `warning`
+
+**Solutions:**
+1. Set `OPENAI_API_KEY` in `src/assets/.env`
+2. Restart the FastAPI server after updating `.env`
+3. Check logs for OpenAI errors (rate limits, invalid key)
+
 ### CORS Error (Frontend)
 
 **Error:**
