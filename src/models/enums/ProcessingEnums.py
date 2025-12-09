@@ -3,3 +3,7 @@ from enum import Enum
 class ProcessingEnum(Enum):
     TXT = ".txt"
     PDF = ".pdf"
+    DOCX = ".docx"
+    MD = ".md"
+    CSV = ".csv"
+    RTF = ".rtf"

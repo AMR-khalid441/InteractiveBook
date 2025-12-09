@@ -25,7 +25,11 @@ class ProjectModel(BaseDataModel):
 
             return new_project 
         
-        return project(**record)
+        # Load existing project and ensure _id is set
+        existing_project = project(**record)
+        if '_id' in record and record['_id'] is not None:
+            existing_project._id = record['_id']
+        return existing_project
     
     async def get_all_projects(self , page: int =1  , page_size:int=10):
         total_documents = await self.collection.count_documents({})
@@ -37,7 +41,10 @@ class ProjectModel(BaseDataModel):
         cursor = self.collection.find().skip((page-1)*page_size).limit(page_size)
         projects =[]
         async for document in cursor :
-            projects.append(project(**document))
+            proj = project(**document)
+            if '_id' in document and document['_id'] is not None:
+                proj._id = document['_id']
+            projects.append(proj)
 
         return projects , total_pages
 

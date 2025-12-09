@@ -1,5 +1,5 @@
 from pydantic import BaseModel , Field , ConfigDict
-from typing import Optional
+from typing import Optional, Dict, Any, List
 from bson.objectid import ObjectId
 
 class DataChunk(BaseModel):
@@ -8,4 +8,7 @@ class DataChunk(BaseModel):
         chunk_text : str = Field(... , min_length = 1)
         chunk_order : int = Field(... , gt=0)
         chunk_project_id : ObjectId
+        file_id : Optional[str] = None
+        metadata : Optional[Dict[str, Any]] = None
+        embedding : Optional[List[float]] = None
         
